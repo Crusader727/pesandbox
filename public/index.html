@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Cube</title>
+    <style>
+        body {
+            text-align: center;
+        }
+        
+        canvas {
+            color: white;
+            width: 100%;
+            height: 100%;
+            border: 1px solid white;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Liquid Three.js Cube</h1>
+    <p>Change the browser's window size.</p>
+    <script src="three.min.js"></script>
+    <script src="TrackballControls.js"></script>
+    <script src="./collada.js"></script>
+    <script src="./keyboard-min.js"></script>
+    <!-- Get the latest version of the Three.js library. -->
+    <script>
+        class Tank {
+            constructor(dae, x, y, z) {
+                this.dae = new THREE.Object3D();
+                this.parent = new THREE.Object3D();
+                this.parent.position.x = -1;
+                this.parent.position.z = +4.4;
+                this.dae.add(this.parent);
+                this.x = x;
+                this.y = y;
+                this.z = z;
+                this.angle = Math.PI - Math.PI;
+            }
+        };
+        class Turret {
+            constructor(dae, x, y, z) {
+                this.dae = new THREE.Object3D();
+                this.parent = new THREE.Object3D();
+                this.parent.position.x = -0.33;
+                this.parent.position.z = -2;
+                this.parent.position.y = +1.7;
+                this.parent.rotation.y += Math.PI;
+                this.dae.add(this.parent);
+                this.x = x;
+                this.y = y;
+                this.z = z;
+                this.angle = Math.PI - Math.PI;
+            }
+        };
+        //////
+        var scene,
+            camera,
+            renderer,
+            controls;
+
+        scene = new THREE.Scene();
+        //new Camera
+        // var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        var dae, loader = new THREE.ColladaLoader();
+        var tank = new Tank(null, 0, 0, 0);
+        var turret = new Turret(null, 0, 0, 0);
+
+        function loadCollada(collada) {
+            collada.scene.children[0].children[1].children[0].children[3] = new THREE.Object3D();
+            tank.parent.add(collada.scene);
+            tank.dae.rotation.x = -0.5 * Math.PI;
+            tank.dae.rotation.z = 1 * Math.PI;
+            scene.add(tank.dae);
+            renderPhone();
+        }
+        loader.options.convertUpAxis = true;
+        loader.load('model.dae', loadCollada);
+
+        function loadCollada2(collada) {
+            let size = 0.012;
+            collada.scene.scale.x = size;
+            collada.scene.scale.y = size;
+            collada.scene.scale.z = size;
+            turret.parent.add(collada.scene);
+            turret.dae.rotation.x = -0.5 * Math.PI;
+            turret.dae.rotation.z = 1 * Math.PI;
+            scene.add(turret.dae);
+            // renderPhone();
+        }
+        loader2 = new THREE.ColladaLoader();
+        loader2.options.convertUpAxis = true;
+        loader2.load('turret.dae', loadCollada2);
+
+
+        function loadCollada3(collada) {
+            let plc = new THREE.Object3D();
+            let size = 0.05;
+            collada.scene.scale.x = size;
+            collada.scene.scale.y = size;
+            collada.scene.scale.z = size;
+            plc.add(collada.scene);
+            plc.rotation.x = -0.5 * Math.PI;
+            plc.rotation.z = 1 * Math.PI;
+            scene.add(plc);
+            // renderPhone();
+        }
+        loader3 = new THREE.ColladaLoader();
+        loader3.options.convertUpAxis = true;
+        loader3.load('trenchs/model.dae', loadCollada3);
+
+
+        ////Old Camera
+        camera = new THREE.PerspectiveCamera(10, window.innerWidth / window.innerHeight, 1, 1000);
+        camera.position.set(-1, 15, -115);
+        // camera.position.set(-1, 220, -295);
+        // camera.position.set(tank.x + 20, tank.y, -25);
+        camera.lookAt(new THREE.Vector3(tank.x - 1, tank.y + 3, 3));
+        //camera.lookAt(tank.x - 1, tank.y - 4.4, tank.z + 3);
+        renderer = new THREE.WebGLRenderer({
+            alpha: true,
+            antialias: true
+        });
+        //tank.dae.add(camera);
+        turret.dae.add(camera);
+        //
+        ///Ground/////////
+        // var planeGeometry = new THREE.PlaneGeometry(60, 20, 1, 1);
+        // var planeMaterial = new THREE.MeshLambertMaterial({
+        //     color: 0x30E02E
+        // });
+        // var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        // plane.receiveShadow = true;
+
+
+        // plane.position.x = 0
+        // plane.position.y = 0
+        // plane.position.z = 0
+
+        // // add the plane to the scene
+        // scene.add(plane);
+        ////////////
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(
+            renderer.domElement);
+        ///////////////////////////////////////// // Trackball Controller ///////////////////////////////////////// 
+        // controls = new THREE.TrackballControls(camera);
+        // controls.rotateSpeed = 5.0;
+        // controls.zoomSpeed = 3.2;
+        // controls.panSpeed = 0.8;
+        // controls.noZoom = false;
+        // controls.noPan = true;
+        // controls.staticMoving = false;
+        // controls.dynamicDampingFactor = 0.2;
+        ///////////////////////////////////////// // Lighting ///////////////////////////////////////// 
+        var iphone_color = '#FAFAFA',
+            ambientLight = new THREE.AmbientLight('#EEEEEE'),
+            hemiLight = new THREE.HemisphereLight(iphone_color, iphone_color, 0),
+            light = new THREE.PointLight(iphone_color, 1, 100);
+        hemiLight.position.set(0, 50, 0);
+        light.position.set(0, 20, 10);
+        scene.add(ambientLight);
+        scene.add(hemiLight);
+        scene.add(light);
+        ///////////////////////////////////////// // Utilities ///////////////////////////////////////// 
+        var axisHelper = new THREE.AxisHelper(10);
+        scene.add(axisHelper);
+
+        function renderPhone() {
+            renderer.render(scene, camera);
+        }
+
+        keyboardJS.bind('m', function(e) {
+            turret.dae.rotation.y += 0.008 * Math.PI;
+        });
+        keyboardJS.bind('n', function(e) {
+            turret.dae.rotation.y -= 0.008 * Math.PI;
+        });
+        keyboardJS.bind('w', function(e) {
+            // tank.dae.position.y += 0.2;
+            tank.dae.position.y += 0.2 * Math.cos(tank.angle);
+            tank.dae.position.x += 0.2 * Math.sin(tank.angle);
+            turret.dae.position.y += 0.2 * Math.cos(tank.angle);
+            turret.dae.position.x += 0.2 * Math.sin(tank.angle);
+            tank.y = tank.dae.position.y;
+        });
+        keyboardJS.bind('s', function(e) {
+            //tank.dae.position.y -= 0.2;
+            tank.dae.position.y -= 0.2 * Math.cos(tank.angle);
+            tank.dae.position.x -= 0.2 * Math.sin(tank.angle);
+            turret.dae.position.y += 0.2 * Math.cos(tank.angle);
+            turret.dae.position.x += 0.2 * Math.sin(tank.angle);
+            tank.y = tank.dae.position.y;
+        });
+        keyboardJS.bind('d', function(e) {
+            tank.dae.rotation.y += 0.005 * Math.PI;
+            tank.angle += 0.005 * Math.PI; //
+            tank.x = tank.dae.position.x;
+        });
+        keyboardJS.bind('a', function(e) {
+            tank.dae.rotation.y -= 0.005 * Math.PI;
+            tank.angle -= 0.005 * Math.PI; //
+            tank.x = tank.dae.position.x;
+        });
+        keyboardJS.watch();
+
+        //controls.addEventListener('change', renderPhone); // Avoid constantly rendering the scene by only // updating the controls every requestAnimationFrame 
+        function animationLoop() {
+            requestAnimationFrame(animationLoop);
+            renderPhone();
+            //controls.update();
+        }
+        animationLoop(); ///////////////////////////////////////// // Window Resizing ///////////////////////////////////////// 
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            //controls.handleResize();
+            renderPhone();
+        }, false); ///////////////////////////////////////// // Object Loader /////////////////////////////////////////
+    </script>
+</body>
+
+</html>
