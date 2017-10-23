@@ -35,10 +35,67 @@
                 this.parent.position.x = -1;
                 this.parent.position.z = +4.4;
                 this.dae.add(this.parent);
-                this.x = x;
-                this.y = y;
-                this.z = z;
+                this.original = null;
                 this.angle = Math.PI - Math.PI;
+                ////new motion
+                this.forward = false;
+                this.backward = false;
+                this.right = false;
+                this.left = false;
+                this.turret = null;
+                this.turretRight = false;
+                this.turretLeft = false;
+                ////collisions try
+                this.BB = null;
+            }
+            moveForward() {
+                this.dae.position.y += 0.2 * Math.cos(this.angle);
+                this.dae.position.x += 0.2 * Math.sin(this.angle);
+                this.turret.dae.position.y += 0.2 * Math.cos(this.angle);
+                this.turret.dae.position.x += 0.2 * Math.sin(this.angle);
+            }
+            moveBackward() {
+                this.dae.position.y -= 0.2 * Math.cos(this.angle);
+                this.dae.position.x -= 0.2 * Math.sin(this.angle);
+                this.turret.dae.position.y -= 0.2 * Math.cos(this.angle);
+                this.turret.dae.position.x -= 0.2 * Math.sin(this.angle);
+            }
+            turnRight() {
+                this.dae.rotation.y += 0.005 * Math.PI;
+                this.angle += 0.005 * Math.PI;
+            }
+            turnLeft() {
+                this.dae.rotation.y -= 0.005 * Math.PI;
+                this.angle -= 0.005 * Math.PI;
+            }
+            turnTurretRight() {
+                this.turret.dae.rotation.y += 0.008 * Math.PI;
+            }
+            turnTurretLeft() {
+                this.turret.dae.rotation.y -= 0.008 * Math.PI;
+            }
+            update() {
+                //collision
+
+                //new motion
+                if (this.forward) {
+                    this.moveForward();
+                }
+                if (this.backward) {
+                    this.moveBackward();
+                }
+                if (this.right) {
+                    this.turnRight();
+                }
+                if (this.left) {
+                    this.turnLeft();
+                }
+                if (this.turretLeft) {
+                    this.turnTurretLeft();
+                }
+                if (this.turretRight) {
+                    this.turnTurretRight();
+                }
             }
         };
         class Turret {
@@ -50,9 +107,6 @@
                 this.parent.position.y = +1.7;
                 this.parent.rotation.y += Math.PI;
                 this.dae.add(this.parent);
-                this.x = x;
-                this.y = y;
-                this.z = z;
                 this.angle = Math.PI - Math.PI;
             }
         };
@@ -63,15 +117,19 @@
             controls;
 
         scene = new THREE.Scene();
-        //new Camera
-        // var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
         var dae, loader = new THREE.ColladaLoader();
         var tank = new Tank(null, 0, 0, 0);
         var turret = new Turret(null, 0, 0, 0);
 
+        //var secondBB = new THREE.Box3();
+        tank.BB = new THREE.Box3();
+
         function loadCollada(collada) {
             collada.scene.children[0].children[1].children[0].children[3] = new THREE.Object3D();
             tank.parent.add(collada.scene);
+            tank.original = collada.scene;
+            //secondBB.setFromObject(tank.original);
             tank.dae.rotation.x = -0.5 * Math.PI;
             tank.dae.rotation.z = 1 * Math.PI;
             scene.add(tank.dae);
@@ -95,67 +153,66 @@
         loader2.options.convertUpAxis = true;
         loader2.load('turret.dae', loadCollada2);
 
+        ///
+        tank.turret = turret;
+
+        //var secondBB;
+        let plc = new THREE.Object3D();
+        var firstBB = new THREE.Box3();
 
         function loadCollada3(collada) {
-            let plc = new THREE.Object3D();
             let size = 0.05;
             collada.scene.scale.x = size;
             collada.scene.scale.y = size;
             collada.scene.scale.z = size;
+            //plc.position.set(new THREE.Vector3(0, 0, 0));
+
             plc.add(collada.scene);
             plc.rotation.x = -0.5 * Math.PI;
             plc.rotation.z = 1 * Math.PI;
-            scene.add(plc);
+            //console.log(plc);
+            plc.position.x = 90;
+            plc.position.y = 90;
+            //scene.add(plc);
+            var geometry = new THREE.BoxGeometry(3, 3, 3);
+            var material = new THREE.MeshBasicMaterial({
+                color: 0x00ff00
+            });
+            var cube = new THREE.Mesh(geometry, material);
+            cube.position.x = 9;
+            cube.position.y = 9;
+            cube.position.z = 1.5;
+            firstBB.setFromObject(cube);
+            scene.add(cube);
             // renderPhone();
+            //secondBB = new THREE.Box3().setFromObject(plc);
         }
         loader3 = new THREE.ColladaLoader();
         loader3.options.convertUpAxis = true;
-        loader3.load('trenchs/model.dae', loadCollada3);
+        loader3.load('tree-boom/model.dae', loadCollada3);
 
+        /////
 
+        // var collision = firstBB.intersectsBox(secondBB);
         ////Old Camera
         camera = new THREE.PerspectiveCamera(10, window.innerWidth / window.innerHeight, 1, 1000);
         camera.position.set(-1, 15, -115);
-        // camera.position.set(-1, 220, -295);
-        // camera.position.set(tank.x + 20, tank.y, -25);
+
         camera.lookAt(new THREE.Vector3(tank.x - 1, tank.y + 3, 3));
         //camera.lookAt(tank.x - 1, tank.y - 4.4, tank.z + 3);
         renderer = new THREE.WebGLRenderer({
             alpha: true,
             antialias: true
         });
+
         //tank.dae.add(camera);
         turret.dae.add(camera);
-        //
-        ///Ground/////////
-        // var planeGeometry = new THREE.PlaneGeometry(60, 20, 1, 1);
-        // var planeMaterial = new THREE.MeshLambertMaterial({
-        //     color: 0x30E02E
-        // });
-        // var plane = new THREE.Mesh(planeGeometry, planeMaterial);
-        // plane.receiveShadow = true;
 
-
-        // plane.position.x = 0
-        // plane.position.y = 0
-        // plane.position.z = 0
-
-        // // add the plane to the scene
-        // scene.add(plane);
-        ////////////
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(
             renderer.domElement);
         ///////////////////////////////////////// // Trackball Controller ///////////////////////////////////////// 
-        // controls = new THREE.TrackballControls(camera);
-        // controls.rotateSpeed = 5.0;
-        // controls.zoomSpeed = 3.2;
-        // controls.panSpeed = 0.8;
-        // controls.noZoom = false;
-        // controls.noPan = true;
-        // controls.staticMoving = false;
-        // controls.dynamicDampingFactor = 0.2;
         ///////////////////////////////////////// // Lighting ///////////////////////////////////////// 
         var iphone_color = '#FAFAFA',
             ambientLight = new THREE.AmbientLight('#EEEEEE'),
@@ -171,44 +228,41 @@
         scene.add(axisHelper);
 
         function renderPhone() {
+            tank.update();
             renderer.render(scene, camera);
         }
 
         keyboardJS.bind('m', function(e) {
-            turret.dae.rotation.y += 0.008 * Math.PI;
+            tank.turretRight = true;
+        }, function(e) {
+            tank.turretRight = false;
         });
         keyboardJS.bind('n', function(e) {
-            turret.dae.rotation.y -= 0.008 * Math.PI;
+            tank.turretLeft = true;
+        }, function(e) {
+            tank.turretLeft = false;
         });
         keyboardJS.bind('w', function(e) {
-            // tank.dae.position.y += 0.2;
-            tank.dae.position.y += 0.2 * Math.cos(tank.angle);
-            tank.dae.position.x += 0.2 * Math.sin(tank.angle);
-            turret.dae.position.y += 0.2 * Math.cos(tank.angle);
-            turret.dae.position.x += 0.2 * Math.sin(tank.angle);
-            tank.y = tank.dae.position.y;
+            tank.forward = true;
+        }, function(e) {
+            tank.forward = false;
         });
         keyboardJS.bind('s', function(e) {
-            //tank.dae.position.y -= 0.2;
-            tank.dae.position.y -= 0.2 * Math.cos(tank.angle);
-            tank.dae.position.x -= 0.2 * Math.sin(tank.angle);
-            turret.dae.position.y += 0.2 * Math.cos(tank.angle);
-            turret.dae.position.x += 0.2 * Math.sin(tank.angle);
-            tank.y = tank.dae.position.y;
+            tank.backward = true;
+        }, function(e) {
+            tank.backward = false;
         });
         keyboardJS.bind('d', function(e) {
-            tank.dae.rotation.y += 0.005 * Math.PI;
-            tank.angle += 0.005 * Math.PI; //
-            tank.x = tank.dae.position.x;
+            tank.right = true;
+        }, function(e) {
+            tank.right = false;
         });
         keyboardJS.bind('a', function(e) {
-            tank.dae.rotation.y -= 0.005 * Math.PI;
-            tank.angle -= 0.005 * Math.PI; //
-            tank.x = tank.dae.position.x;
+            tank.left = true;
+        }, function(e) {
+            tank.left = false;
         });
-        keyboardJS.watch();
 
-        //controls.addEventListener('change', renderPhone); // Avoid constantly rendering the scene by only // updating the controls every requestAnimationFrame 
         function animationLoop() {
             requestAnimationFrame(animationLoop);
             renderPhone();
